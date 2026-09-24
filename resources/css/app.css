@@ -1,0 +1,67 @@
+/* Font Plus Jakarta Sans dipasang lokal lewat @fontsource supaya tetap
+   tampil saat aplikasi dibuka tanpa koneksi (PWA, Tahap 10). */
+@import '@fontsource/plus-jakarta-sans/400.css';
+@import '@fontsource/plus-jakarta-sans/500.css';
+@import '@fontsource/plus-jakarta-sans/600.css';
+@import '@fontsource/plus-jakarta-sans/700.css';
+@import '@fontsource/plus-jakarta-sans/800.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    html {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+        @apply bg-frost text-ink;
+    }
+
+    /* Angka uang dan jumlah selalu rata lebar agar mudah dibandingkan. */
+    .tabular-nums,
+    td.angka,
+    th.angka {
+        font-variant-numeric: tabular-nums;
+    }
+
+    /* Fokus keyboard harus selalu terlihat. */
+    :focus-visible {
+        @apply outline outline-2 outline-offset-2 outline-berry;
+    }
+
+    /* Hormati pengaturan "kurangi gerakan" di sistem pengguna. */
+    @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+            scroll-behavior: auto !important;
+        }
+    }
+}
+
+@layer components {
+    /* Kolom angka di tabel: rata kanan + tabular-nums. */
+    .kolom-angka {
+        @apply text-right tabular-nums;
+    }
+
+    /* Ukuran sentuh minimal 44px sesuai panduan aksesibilitas. */
+    .sentuh {
+        @apply min-h-[44px] min-w-[44px];
+    }
+}
+
+@media print {
+    .tanpa-cetak {
+        display: none !important;
+    }
+
+    body {
+        background: #fff;
+    }
+}
