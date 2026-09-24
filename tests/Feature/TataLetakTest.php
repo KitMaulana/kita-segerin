@@ -47,9 +47,9 @@ class TataLetakTest extends TestCase
         $user = User::factory()->create();
 
         $this->actingAs($user)
-            ->get(route('produk.index'))
+            ->get(route('laporan.index'))
             ->assertOk()
-            ->assertSee('Tahap 4');
+            ->assertSee('Tahap 8');
     }
 
     /**
