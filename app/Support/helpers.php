@@ -199,3 +199,37 @@ if (! function_exists('nav_aktif')) {
         return request()->routeIs($kunci) || request()->routeIs($kunci.'.*');
     }
 }
+
+if (! function_exists('nav_boleh')) {
+    /**
+     * Menentukan apakah satu item menu boleh dilihat pengguna yang sedang masuk,
+     * berdasarkan kunci "roles" di config/navigation.php.
+     *
+     * @param  array<string, mixed>  $item
+     */
+    function nav_boleh(array $item): bool
+    {
+        $pengguna = auth()->user();
+
+        if (! $pengguna) {
+            return false;
+        }
+
+        $peran = $item['roles'] ?? null;
+
+        return blank($peran) || in_array($pengguna->role, (array) $peran, true);
+    }
+}
+
+if (! function_exists('nav_grup_terpakai')) {
+    /**
+     * Item satu grup menu yang boleh dilihat pengguna saat ini.
+     *
+     * @param  array<string, mixed>  $grup
+     * @return \Illuminate\Support\Collection<int, array<string, mixed>>
+     */
+    function nav_grup_terpakai(array $grup): \Illuminate\Support\Collection
+    {
+        return collect($grup['items'] ?? [])->filter('nav_boleh')->values();
+    }
+}

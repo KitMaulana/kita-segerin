@@ -70,6 +70,16 @@ class LoginRequest extends FormRequest
             ]);
         }
 
+        // Akun yang sudah dinonaktifkan pemilik tidak boleh masuk.
+        if (! Auth::user()->is_active) {
+            Auth::guard('web')->logout();
+            RateLimiter::hit($this->throttleKey());
+
+            throw ValidationException::withMessages([
+                'login' => trans('auth.inactive'),
+            ]);
+        }
+
         RateLimiter::clear($this->throttleKey());
     }
 

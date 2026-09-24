@@ -1,7 +1,10 @@
 <?php
 
+use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\PlaceholderController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SettingController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -17,15 +20,36 @@ use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/beranda')->name('home');
 
-// Catatan: middleware penolak akun nonaktif dan Gate per peran dipasang pada Tahap 3.
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'aktif'])->group(function () {
 
     Route::view('/beranda', 'beranda')->name('beranda');
     Route::view('/lainnya', 'lainnya')->name('lainnya');
 
-    // Profil sendiri (bawaan Breeze, slug diterjemahkan).
+    // Profil sendiri.
     Route::get('/profil', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profil', [ProfileController::class, 'update'])->name('profile.update');
+
+    /*
+     | Khusus pemilik: kelola akun, pengaturan usaha, dan log aktivitas.
+     */
+    Route::middleware('can:kelola-akun')->group(function () {
+        Route::get('/akun', [UserController::class, 'index'])->name('akun.index');
+        Route::get('/akun/tambah', [UserController::class, 'create'])->name('akun.create');
+        Route::post('/akun', [UserController::class, 'store'])->name('akun.store');
+        Route::get('/akun/{akun}/ubah', [UserController::class, 'edit'])->name('akun.edit');
+        Route::put('/akun/{akun}', [UserController::class, 'update'])->name('akun.update');
+        Route::patch('/akun/{akun}/status', [UserController::class, 'toggle'])->name('akun.toggle');
+        Route::patch('/akun/{akun}/reset-sandi', [UserController::class, 'resetPassword'])->name('akun.reset-password');
+    });
+
+    Route::middleware('can:kelola-pengaturan')->group(function () {
+        Route::get('/pengaturan', [SettingController::class, 'edit'])->name('pengaturan.edit');
+        Route::put('/pengaturan', [SettingController::class, 'update'])->name('pengaturan.update');
+    });
+
+    Route::middleware('can:lihat-log')->group(function () {
+        Route::get('/log-aktivitas', [ActivityLogController::class, 'index'])->name('log-aktivitas.index');
+    });
 
     /*
      | Halaman sementara. Setiap baris diganti controller sungguhan pada
@@ -41,9 +65,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/biaya', PlaceholderController::class)->name('biaya.index');
     Route::get('/kas', PlaceholderController::class)->name('kas.index');
     Route::get('/laporan', PlaceholderController::class)->name('laporan.index');
-    Route::get('/akun', PlaceholderController::class)->name('akun.index');
-    Route::get('/pengaturan', PlaceholderController::class)->name('pengaturan.edit');
-    Route::get('/log-aktivitas', PlaceholderController::class)->name('log-aktivitas.index');
 });
 
 require __DIR__.'/auth.php';

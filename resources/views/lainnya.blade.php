@@ -6,7 +6,8 @@
     <div class="space-y-6">
         @foreach (config('navigation.groups') as $group)
             @php
-                $items = collect($group['items'])->reject(fn ($i) => in_array($i['key'], $dibawah, true));
+                $items = nav_grup_terpakai($group)
+                    ->reject(fn ($i) => in_array($i['key'], $dibawah, true));
             @endphp
 
             @if ($items->isNotEmpty())

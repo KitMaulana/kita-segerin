@@ -11,6 +11,9 @@
 
     <nav class="flex-1 space-y-6 overflow-y-auto px-3 py-5" aria-label="Menu utama">
         @foreach (config('navigation.groups') as $group)
+            @php $items = nav_grup_terpakai($group); @endphp
+            @continue ($items->isEmpty())
+
             <div>
                 @if ($group['label'])
                     <p class="mb-2 px-3 text-[11px] font-bold uppercase tracking-wider text-ink/40">
@@ -19,7 +22,7 @@
                 @endif
 
                 <ul class="space-y-1">
-                    @foreach ($group['items'] as $item)
+                    @foreach ($items as $item)
                         @php $aktif = nav_aktif($item['key']); @endphp
                         <li>
                             <a href="{{ nav_url($item['route']) }}"

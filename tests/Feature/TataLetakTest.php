@@ -32,7 +32,7 @@ class TataLetakTest extends TestCase
 
     public function test_halaman_lainnya_menampilkan_seluruh_menu(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->owner()->create();
 
         $this->actingAs($user)
             ->get(route('lainnya'))
@@ -58,7 +58,7 @@ class TataLetakTest extends TestCase
      */
     public function test_semua_menu_navigasi_punya_route(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->owner()->create();
 
         $menu = collect(config('navigation.groups'))->flatMap(fn ($grup) => $grup['items']);
 
