@@ -129,7 +129,7 @@ class PaymentController extends Controller
 
             ActivityLog::catat(
                 'menghapus',
-                "Menghapus pembayaran {$pembayaran->number} sebesar ".rupiah($pembayaran->amount).".",
+                "Menghapus pembayaran {$pembayaran->number} sebesar ".rupiah($pembayaran->amount).'.',
                 $tagihan
             );
 

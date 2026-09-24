@@ -4,11 +4,12 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 /**
- * Memastikan rangka aplikasi Tahap 1 berjalan: pengalihan halaman depan,
- * beranda, menu, dan halaman sementara.
+ * Memastikan rangka aplikasi berjalan: pengalihan halaman depan, beranda,
+ * halaman "Lainnya", dan seluruh menu navigasi bisa dibuka.
  */
 class TataLetakTest extends TestCase
 {
@@ -27,7 +28,8 @@ class TataLetakTest extends TestCase
             ->get(route('beranda'))
             ->assertOk()
             ->assertSee('KITAA SEGERIN')
-            ->assertSee('Rp261.000');
+            ->assertSee('Ringkasan bulan ini')
+            ->assertSee('Setoran bulan ini');
     }
 
     public function test_halaman_lainnya_menampilkan_seluruh_menu(): void
@@ -40,16 +42,6 @@ class TataLetakTest extends TestCase
             ->assertSee('Produk')
             ->assertSee('Buku Kas')
             ->assertSee('Pengaturan Usaha');
-    }
-
-    public function test_menu_yang_belum_dikerjakan_menampilkan_halaman_sementara(): void
-    {
-        $user = User::factory()->create();
-
-        $this->actingAs($user)
-            ->get(route('laporan.index'))
-            ->assertOk()
-            ->assertSee('Tahap 8');
     }
 
     /**
@@ -66,7 +58,7 @@ class TataLetakTest extends TestCase
 
         foreach ($menu as $item) {
             $this->assertTrue(
-                \Illuminate\Support\Facades\Route::has($item['route']),
+                Route::has($item['route']),
                 "Route {$item['route']} untuk menu {$item['label']} belum terdaftar."
             );
 

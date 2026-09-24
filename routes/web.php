@@ -1,13 +1,16 @@
 <?php
 
 use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\CashBookController;
 use App\Http\Controllers\ConsignmentController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PaymentController;
-use App\Http\Controllers\PlaceholderController;
 use App\Http\Controllers\ProductController;
-use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PurchaseController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\StoreController;
@@ -30,7 +33,8 @@ Route::redirect('/', '/beranda')->name('home');
 
 Route::middleware(['auth', 'aktif'])->group(function () {
 
-    Route::view('/beranda', 'beranda')->name('beranda');
+    Route::get('/beranda', [DashboardController::class, 'index'])->name('beranda');
+    Route::get('/beranda/cetak', [DashboardController::class, 'cetak'])->name('beranda.cetak');
     Route::view('/lainnya', 'lainnya')->name('lainnya');
 
     // Profil sendiri.
@@ -90,10 +94,6 @@ Route::middleware(['auth', 'aktif'])->group(function () {
     Route::post('/stok/penyesuaian', [StockController::class, 'storePenyesuaian'])->name('stok.penyesuaian.store');
     Route::get('/stok/{produk}', [StockController::class, 'show'])->name('stok.show');
 
-    /*
-     | Halaman sementara. Setiap baris diganti controller sungguhan pada
-     | tahap yang disebut di PlaceholderController.
-     */
     Route::get('/pengiriman', [ConsignmentController::class, 'index'])->name('pengiriman.index');
     Route::get('/pengiriman/tambah', [ConsignmentController::class, 'create'])->name('pengiriman.create');
     Route::post('/pengiriman', [ConsignmentController::class, 'store'])->name('pengiriman.store');
@@ -122,9 +122,22 @@ Route::middleware(['auth', 'aktif'])->group(function () {
     Route::get('/toko/{toko}/harga', [StoreController::class, 'harga'])->name('toko.harga');
     Route::post('/toko/{toko}/harga', [StoreController::class, 'simpanHarga'])->name('toko.harga.simpan');
     Route::delete('/toko/{toko}/harga/{harga}', [StoreController::class, 'hapusHarga'])->name('toko.harga.hapus');
-    Route::get('/biaya', PlaceholderController::class)->name('biaya.index');
-    Route::get('/kas', PlaceholderController::class)->name('kas.index');
-    Route::get('/laporan', PlaceholderController::class)->name('laporan.index');
+    Route::get('/biaya', [ExpenseController::class, 'index'])->name('biaya.index');
+    Route::get('/biaya/tambah', [ExpenseController::class, 'create'])->name('biaya.create');
+    Route::post('/biaya', [ExpenseController::class, 'store'])->name('biaya.store');
+    Route::get('/biaya/{biaya}/ubah', [ExpenseController::class, 'edit'])->name('biaya.edit');
+    Route::put('/biaya/{biaya}', [ExpenseController::class, 'update'])->name('biaya.update');
+    Route::delete('/biaya/{biaya}', [ExpenseController::class, 'destroy'])->name('biaya.destroy');
+
+    Route::get('/kas', [CashBookController::class, 'index'])->name('kas.index');
+    Route::get('/kas/tambah', [CashBookController::class, 'create'])->name('kas.create');
+    Route::post('/kas', [CashBookController::class, 'store'])->name('kas.store');
+    Route::delete('/kas/{kas}', [CashBookController::class, 'destroy'])->name('kas.destroy');
+
+    Route::get('/laporan', [ReportController::class, 'index'])->name('laporan.index');
+    Route::get('/laporan/{jenis}/pdf', [ReportController::class, 'pdf'])->name('laporan.pdf');
+    Route::get('/laporan/{jenis}/excel', [ReportController::class, 'excel'])->name('laporan.excel');
+    Route::get('/laporan/{jenis}', [ReportController::class, 'tampil'])->name('laporan.tampil');
 });
 
 require __DIR__.'/auth.php';

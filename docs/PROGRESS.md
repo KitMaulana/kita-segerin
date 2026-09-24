@@ -78,6 +78,192 @@ Berkas ini dicatat setiap kali satu tahap di `CLAUDE.md` bagian G selesai.
 
 ---
 
-## Tahap 2 — Database, model, seeder ⏳
+## Tahap 2 — Database, model, seeder ✅
+
+**Selesai:** 24 September 2026
+
+| Poin | Hasil |
+|---|---|
+| 1. Migration, model, relasi | 6 migration bertema (`core`, `master`, `purchase_and_stock`, `consignment`, `invoice`, `finance`) memuat seluruh tabel bagian E, lengkap dengan cast, relasi Eloquent, dan soft delete pada data master |
+| 2. `FinanceCalculator` | Semua rumus bagian B + `resolvePrice(store, product, date)` |
+| 3. `DocumentNumber` | Penomoran `BLI/KRM/INV/BYR` dengan `lockForUpdate` |
+| 4. `StockService` | Stok gudang, stok dititipkan di toko, nilai persediaan |
+| 5. Seeder | Akun `pemilik`, pengaturan usaha, 7 kategori biaya, 1 pemasok, 5 produk contoh, toko Koperasi Budi Utama |
+| 6. Unit test | `FinanceCalculatorTest` memakai contoh uji bagian B, termasuk fee persen dan penolakan qty melebihi kiriman |
+
+### Keputusan penting
+
+1. **Stok tidak disimpan sebagai kolom angka.** Sesuai bagian E, stok gudang selalu `SUM(qty)` dari
+   `stock_movements` lewat `StockService`, supaya tidak pernah selisih dengan riwayat mutasinya.
+2. **Uang memakai `unsignedBigInteger`** di seluruh tabel; tidak ada kolom float/decimal untuk rupiah.
+3. **Fee persen dibulatkan sekali di `FinanceCalculator`**, lalu hasil rupiahnya disalin (snapshot) ke
+   `consignment_items.fee_per_unit`, supaya cetakan lama tidak pernah berubah angkanya.
+
+---
+
+## Tahap 3 — Akun admin & pengaturan usaha ✅
+
+**Selesai:** 24 September 2026
+
+| Poin | Hasil |
+|---|---|
+| 1. Menu Akun Admin | `UserController`: daftar, tambah, ubah, aktif/nonaktif, reset kata sandi, atur peran |
+| 2. Hak akses | 9 Gate di `AuthServiceProvider` sesuai tabel peran bagian E + middleware `aktif` (`EnsureUserIsActive`) |
+| 3. Halaman profil | Ubah nama & kata sandi sendiri |
+| 4. Pengaturan Usaha | `SettingController`: identitas usaha, logo, rekening bank, penandatangan, jatuh tempo, catatan tagihan |
+| 5. Log aktivitas | Pencatatan otomatis + halaman "Log Aktivitas" khusus pemilik |
+
+### Keputusan penting
+
+1. **Gate, bukan Policy.** Hak akses di bagian E berbasis peran (bukan kepemilikan baris), jadi 9 Gate
+   bernama (`input-transaksi`, `kelola-tagihan`, `batalkan-tagihan`, `kelola-akun`, dll.) lebih ringkas
+   daripada Policy per model. Blade memakai `@can` dengan nama Gate yang sama.
+2. **Pemilik terakhir dilindungi**: pemilik tidak bisa menonaktifkan atau menurunkan peran dirinya sendiri,
+   dan sistem menolak tindakan yang menyisakan nol pemilik aktif.
+3. **Menu disaring per peran** — kunci `roles` di `config/navigation.php` yang disiapkan Tahap 1
+   sekarang benar-benar ditegakkan di sidebar, navigasi bawah, dan halaman "Lainnya".
+
+---
+
+## Tahap 4 — Produk, pemasok, pembelian & stok ✅
+
+**Selesai:** 24 September 2026
+
+| Poin | Hasil |
+|---|---|
+| 1. CRUD Pemasok | `SupplierController` |
+| 2. CRUD Produk | `ProductController` + pratinjau Alpine.js (setoran & laba per pcs saat mengetik harga) |
+| 3. Riwayat harga modal | Tercatat ke `product_cost_histories`, tampil di detail produk |
+| 4. Pembelian | `PurchaseController`: banyak baris, total otomatis, opsi "Perbarui harga modal", otomatis membuat `stock_movements` (+) dan kas keluar |
+| 5. Menu Stok | `StockController`: stok gudang, stok di toko, tanda warna mango saat menipis, nilai persediaan, penyesuaian manual dengan alasan wajib |
+
+### Keputusan penting
+
+1. **Satu pembelian = satu `DB::transaction()`** yang menulis `purchases`, `purchase_items`,
+   `stock_movements`, `cash_transactions`, dan (opsional) `product_cost_histories` sekaligus.
+2. **Perubahan harga modal selalu berjejak**, baik dari form produk (`source: manual`) maupun dari
+   pembelian (`source: purchase`).
+
+---
+
+## Tahap 5 — Toko, harga jual & fee ✅
+
+**Selesai:** 24 September 2026
+
+| Poin | Hasil |
+|---|---|
+| 1. CRUD Toko | `StoreController` (kode, nama, jenis, kontak, alamat, tempo bayar) |
+| 2. Tab Harga & Fee | Tabel semua produk aktif: harga jual, jenis & nilai fee, setoran/pcs, laba/pcs dari `FinanceCalculator`; harga khusus toko punya tanggal mulai berlaku, yang kosong ditandai "default" |
+| 3. Simulasi cepat | Masukkan jumlah terjual per produk → penjualan kotor, fee toko, setoran, laba |
+| 4. Riwayat harga | Perubahan harga khusus per toko bisa ditelusuri |
+
+### Keputusan penting
+
+1. **Harga khusus tidak menimpa baris lama.** Mengubah harga toko membuat baris `store_prices` baru
+   dengan `effective_from` sendiri; `resolvePrice()` memilih baris berlaku terakhir pada tanggal kirim.
+   Baris-baris itu sekaligus menjadi riwayat harga per toko.
+
+---
+
+## Tahap 6 — Pengiriman titip jual & rekonsiliasi ✅
+
+**Selesai:** 24 September 2026
+
+| Poin | Hasil |
+|---|---|
+| 1. Buat pengiriman | `ConsignmentController`: validasi qty tidak melebihi stok gudang, snapshot `unit_cost`/`unit_price`/`fee_per_unit`, `stock_movements` (−) |
+| 2. Cetak | Surat jalan PDF A4 (dompdf) + versi struk 58mm lewat CSS print, berkolom tanda tangan pengirim & penerima toko |
+| 3. Rekonsiliasi | Isi terjual/retur/rusak, tombol "Terjual semua", `sisa_belum_dicatat` dihitung langsung di layar dan ditolak jika < 0; retur → `return_in` (+), rusak → `damaged`, status menjadi `settled` |
+| 4. Ringkasan | Penjualan kotor, fee toko, setoran, HPP, laba kotor, kerugian rusak, tingkat laku (%) |
+| 5. Daftar | Filter toko/status/rentang tanggal; kartu di HP, tabel di desktop |
+
+### Keputusan penting
+
+1. **`damaged` dicatat tanpa mengubah stok gudang** karena barangnya memang sudah keluar saat pengiriman —
+   barisnya ada murni sebagai jejak kerugian, sesuai bagian G Tahap 6 poin 3.
+
+---
+
+## Tahap 7 — Tagihan setoran & pembayaran ✅
+
+**Selesai:** 24 September 2026
+
+| Poin | Hasil |
+|---|---|
+| 1. Buat tagihan | `InvoiceController`: pilih toko → daftar pengiriman `settled` yang belum ditagih → centang → `invoices` + `invoice_items` (snapshot); pengiriman menjadi `invoiced` dan terkunci |
+| 2. Cetak | Tagihan PDF A4 berkop lengkap (terbilang, rekening, catatan, tanda tangan & stempel) + versi struk 58mm |
+| 3. WhatsApp | Tombol `wa.me` berisi nomor tagihan, total, dan jatuh tempo |
+| 4. Pembayaran | `PaymentController`: bertahap, bukti opsional, status `unpaid`/`partial`/`paid` otomatis, kas masuk otomatis, kuitansi bisa dicetak |
+| 5. Batalkan tagihan | Khusus pemilik, alasan wajib; pengiriman kembali `settled`; ditolak bila sudah ada pembayaran |
+| 6. Daftar tagihan | Filter status & toko, tanda warna strawberry saat lewat jatuh tempo |
+
+### Keputusan penting
+
+1. **`invoice_items` menyimpan `product_name` dan seluruh angka satuannya**, bukan sekadar `product_id`,
+   supaya cetak ulang tagihan lama tetap sama walau produknya diubah atau dinonaktifkan.
+
+---
+
+## Tahap 8 — Pembukuan & rekap lengkap ✅
+
+**Selesai:** 24 September 2026
+
+| Poin | Hasil |
+|---|---|
+| 1. Biaya operasional | `ExpenseController` (CRUD + unggah bukti), otomatis masuk buku kas |
+| 2. Buku Kas | `CashBookController` + `CashBookService`: saldo berjalan, filter periode & kategori, input manual modal pemilik/prive/lainnya |
+| 3. Tujuh laporan | `ReportService`: `labaRugi`, `rekapProduk`, `rekapToko`, `piutang` (umur 0–7/8–14/15–30/>30 hari), `arusKas`, `persediaan`, `rekapPeriodePengiriman` — semuanya berfilter periode |
+| 4. Ekspor | PDF (dompdf; laporan produk/toko/periode-pengiriman memakai A4 landscape) dan Excel `.xlsx` |
+| 5. Feature test | `LaporanTest` (16 test) membandingkan total laporan laba rugi dengan data yang dibuatnya |
+
+### Keputusan penting
+
+1. **`openspout/openspout`, bukan `maatwebsite/excel`.** Bagian C mengizinkan penggantian ini bila ada
+   masalah kompatibilitas. Ekspor ditulis lewat pembungkus tipis `App\Support\ExcelWriter` yang melakukan
+   streaming ke output, jadi baris yang banyak tidak menumpuk di memori.
+2. **Tidak ada perhitungan uang di Blade.** Seluruh angka laporan berasal dari query agregat di
+   `ReportService`, sesuai bagian G Tahap 8 poin 5.
+3. **Dua sumbu waktu dipisah tegas**: laba rugi memakai tanggal rekonsiliasi (`settled_date`),
+   arus kas memakai tanggal uang benar-benar bergerak (`cash_transactions.date`).
+
+---
+
+## Tahap 9 — Beranda infografis ✅
+
+**Selesai:** 24 September 2026
+
+| Poin | Hasil |
+|---|---|
+| 1. Kartu ringkasan | Setoran & laba bersih bulan ini (dengan pembanding % bulan lalu), piutang belum dibayar, nilai persediaan, pcs terjual |
+| 2–5. Grafik Chart.js | Tren setoran & laba 6 bulan terakhir, donat komposisi penjualan per produk, batang berujung bulat "tingkat laku" ala es krim stik, 5 toko dengan setoran terbesar |
+| 6. Panel perhatian | Tagihan lewat jatuh tempo, stok menipis, pengiriman belum direkonsiliasi lebih dari 7 hari |
+| 7. Tombol cepat | Catat pengiriman, Buat tagihan, Catat biaya |
+| 8. Cetak infografis | `beranda-cetak.blade.php` dengan CSS print A4 landscape |
+
+### Keputusan penting
+
+1. **Cache 5 menit per bulan yang ditampilkan.** Cache dibersihkan otomatis oleh model event
+   (`saved`/`deleted`) pada Purchase, StockMovement, Consignment, ConsignmentItem, Invoice, Payment,
+   dan kawan-kawannya — didaftarkan di `AppServiceProvider`, sehingga transaksi baru langsung terlihat
+   tanpa menunggu lima menit.
+2. **Beranda sementara Tahap 1 diganti.** `PlaceholderController` dan `placeholder.blade.php` dihapus
+   karena seluruh menu sudah punya halaman asli; `TataLetakTest` disesuaikan agar memeriksa kartu
+   ringkasan dashboard, bukan angka contoh `Rp261.000` milik halaman sementara.
+
+### Hasil uji Tahap 2–9
+
+- `php artisan migrate:fresh --seed` — berjalan tanpa error
+- `php artisan test` — **191 test hijau, 644 assertion**
+
+### Yang masih tertunda
+
+- [ ] **Tahap 10 — PWA**: `manifest.webmanifest`, `sw.js`, ikon 192/512/maskable, halaman `/offline`,
+      tombol "Pasang aplikasi"
+- [ ] **Tahap 11** — feature test alur lengkap, audit keamanan (rate limit login, batas unggah berkas),
+      fitur backup database, `docs/PANDUAN-PENGGUNA.md`, `docs/DEPLOY.md`
+
+---
+
+## Tahap 10 — PWA ⏳
 
 Belum dikerjakan.

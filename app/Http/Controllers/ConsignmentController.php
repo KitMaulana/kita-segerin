@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\ConsignmentRequest;
 use App\Models\ActivityLog;
 use App\Models\Consignment;
+use App\Models\ConsignmentItem;
 use App\Models\Product;
 use App\Models\Setting;
 use App\Models\Store;
@@ -15,6 +16,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
@@ -181,7 +183,7 @@ class ConsignmentController extends Controller
                 ->delete();
 
             foreach ($data['items'] as $isi) {
-                /** @var \App\Models\ConsignmentItem $item */
+                /** @var ConsignmentItem $item */
                 $item = $itemById->get($isi['id']);
 
                 $item->update([
@@ -286,7 +288,7 @@ class ConsignmentController extends Controller
     /**
      * Hitungan per baris produk pada satu pengiriman.
      *
-     * @return \Illuminate\Support\Collection<int, array<string, mixed>>
+     * @return Collection<int, array<string, mixed>>
      */
     private function barisHitung(Consignment $pengiriman)
     {

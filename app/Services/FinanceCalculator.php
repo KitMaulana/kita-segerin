@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Invoice;
 use App\Models\Product;
 use App\Models\Store;
 use App\Models\StorePrice;
@@ -219,7 +220,7 @@ class FinanceCalculator
     /**
      * Membagi daftar tagihan ke dalam kelompok umur piutang.
      *
-     * @param  iterable<\App\Models\Invoice>  $tagihan
+     * @param  iterable<Invoice>  $tagihan
      * @return array<string, array{jumlah: int, nilai: int}>
      */
     public function umurPiutang(iterable $tagihan): array

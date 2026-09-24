@@ -2,6 +2,8 @@
 
 use Carbon\CarbonInterface;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Route;
 
 if (! function_exists('rupiah')) {
     /**
@@ -47,7 +49,7 @@ if (! function_exists('tanggal_indo')) {
     /**
      * Tanggal format Indonesia, mis. "23 September 2026".
      *
-     * @param  \DateTimeInterface|string|null  $tanggal
+     * @param  DateTimeInterface|string|null  $tanggal
      */
     function tanggal_indo($tanggal, bool $denganJam = false): string
     {
@@ -71,7 +73,7 @@ if (! function_exists('tanggal_singkat')) {
     /**
      * Tanggal ringkas untuk tabel/kartu, mis. "23 Sep 2026".
      *
-     * @param  \DateTimeInterface|string|null  $tanggal
+     * @param  DateTimeInterface|string|null  $tanggal
      */
     function tanggal_singkat($tanggal): string
     {
@@ -185,7 +187,7 @@ if (! function_exists('nav_url')) {
             return '#';
         }
 
-        return \Illuminate\Support\Facades\Route::has($namaRoute) ? route($namaRoute) : '#';
+        return Route::has($namaRoute) ? route($namaRoute) : '#';
     }
 }
 
@@ -226,9 +228,9 @@ if (! function_exists('nav_grup_terpakai')) {
      * Item satu grup menu yang boleh dilihat pengguna saat ini.
      *
      * @param  array<string, mixed>  $grup
-     * @return \Illuminate\Support\Collection<int, array<string, mixed>>
+     * @return Collection<int, array<string, mixed>>
      */
-    function nav_grup_terpakai(array $grup): \Illuminate\Support\Collection
+    function nav_grup_terpakai(array $grup): Collection
     {
         return collect($grup['items'] ?? [])->filter('nav_boleh')->values();
     }
