@@ -61,7 +61,7 @@ Berkas ini dicatat setiap kali satu tahap di `CLAUDE.md` bagian G selesai.
 - [ ] **Middleware penolak akun nonaktif** — Tahap 3 (catatan sudah ditulis di `routes/web.php`)
 - [ ] **Halaman sementara** untuk 13 menu — diganti bertahap, daftarnya ada di
       `app/Http/Controllers/PlaceholderController.php` beserta tahapnya
-- [ ] Ikon PWA & service worker — Tahap 10
+- [x] Ikon PWA & service worker — selesai di Tahap 10
 
 ### Berkas penting Tahap 1
 
@@ -257,13 +257,90 @@ Berkas ini dicatat setiap kali satu tahap di `CLAUDE.md` bagian G selesai.
 
 ### Yang masih tertunda
 
-- [ ] **Tahap 10 — PWA**: `manifest.webmanifest`, `sw.js`, ikon 192/512/maskable, halaman `/offline`,
+- [x] **Tahap 10 — PWA**: `manifest.webmanifest`, `sw.js`, ikon 192/512/maskable, halaman `/offline`,
       tombol "Pasang aplikasi"
 - [ ] **Tahap 11** — feature test alur lengkap, audit keamanan (rate limit login, batas unggah berkas),
       fitur backup database, `docs/PANDUAN-PENGGUNA.md`, `docs/DEPLOY.md`
 
 ---
 
-## Tahap 10 — PWA ⏳
+## Tahap 10 — PWA ✅
+
+**Selesai:** 24 September 2026
+
+| Poin | Hasil |
+|---|---|
+| 1. Manifest & ikon | `public/manifest.webmanifest` (name KITAA SEGERIN, short_name Segerin, start_url `/beranda`, standalone, theme berry, latar frost) + ikon 192, 512, maskable 512, dan apple-touch 180 |
+| 2. Service worker | `public/sw.js`: cache-first untuk aset build/font/ikon, network-first untuk halaman, dan daftar larangan untuk laporan keuangan, dokumen cetak, serta seluruh permintaan non-GET |
+| 3. Halaman offline | Route publik `/offline` + `resources/views/offline.blade.php` |
+| 4. Pendaftaran & versi | `resources/js/pwa.js` mendaftarkan `/sw.js?v=<versi_aset()>`; versi berubah tiap build |
+| 5. Tombol pasang | Bagian "Aplikasi" di halaman Lainnya: tombol pasang (Android/desktop), petunjuk Bagikan → Tambah ke Layar Utama (iPhone), dan keterangan bila sudah terpasang |
+| 6. Meta tag | `theme-color`, `apple-touch-icon`, `apple-mobile-web-app-*` di kedua layout (setelah masuk maupun halaman masuk) |
+
+### Keputusan penting
+
+1. **Versi cache lewat query string, bukan menulis ulang `sw.js` saat build.**
+   Service worker membaca versinya sendiri dari `new URL(self.location).searchParams.get('v')`,
+   dan Blade mengisi `v` dari helper baru `versi_aset()` — 10 karakter pertama md5
+   `public/build/manifest.json`. Setiap `npm run build` mengubah nilai itu, sehingga peramban
+   melihat URL service worker yang berbeda, memasang yang baru, lalu membuang cache lama di
+   tahap `activate`. Tidak perlu langkah build tambahan atau paket apa pun.
+2. **Ikon digambar dengan GD lewat `php artisan pwa:ikon`.** Tidak ada Imagick maupun pengubah
+   SVG→PNG di komputer ini, dan `@fontsource` hanya memuat woff/woff2 sehingga GD tidak bisa
+   menulis teks. Karena itu bentuk es krim dan huruf KS digambar dari bangun dasar
+   (persegi tumpul, gelombang sinus, goresan berujung bulat, dua busur untuk huruf S) pada kanvas
+   4× lalu dikecilkan agar tepinya halus. Ikonnya jadi bisa dibuat ulang di komputer mana pun
+   tanpa paket tambahan, dan bentuknya sama dengan `components/app-logo.blade.php`.
+3. **Halaman `/offline` sengaja tidak memakai layout aplikasi.** Gayanya ditulis langsung di
+   dalam berkas supaya tetap rapi walau berkas CSS hasil build belum sempat tersimpan, dan
+   isinya tidak memuat data usaha apa pun karena halaman ini boleh dibuka tanpa masuk.
+4. **Halaman terlarang tetap dilayani, hanya tidak disimpan.** Saat tidak ada koneksi, membuka
+   `/laporan` tetap memunculkan halaman `/offline` buatan sendiri, bukan halaman error peramban.
+   `/masuk` boleh disimpan, tetapi `/login` dan `/logout` masuk daftar larangan supaya token CSRF
+   basi tidak pernah dipakai ulang.
+5. **`public/.htaccess` diberi tipe `application/manifest+json`** untuk `.webmanifest` dan
+   `Cache-Control: no-cache` untuk `sw.js`. Tanpa itu sebagian Apache di hosting mengirim
+   manifest sebagai berkas unduhan sehingga aplikasi tidak bisa dipasang.
+
+### Hasil uji
+
+- `php artisan test` — **202 test hijau, 690 assertion** (11 di antaranya `tests/Feature/PwaTest.php`)
+- `php artisan migrate:fresh --seed` — berjalan tanpa error
+- `node --check` pada `public/sw.js` dan `resources/js/pwa.js` — sintaks valid
+- 22 kasus aturan cache diperiksa satu per satu (mis. `/laporan/produk/pdf` dilarang,
+  `/tagihan/9` boleh, `/tagihan/9/cetak` dilarang, `/laporankeuangan` tidak ikut terlarang) — semua benar
+- `/manifest.webmanifest`, `/sw.js`, `/icons/icon-192.png`, `/offline` diuji lewat `php artisan serve` — semua 200 dengan tipe berkas yang benar
+
+### Belum diverifikasi otomatis
+
+- **Lighthouse belum dijalankan.** `npx lighthouse` gagal di Windows (galat penghapusan folder
+  sementara), dan Lighthouse versi baru sudah menghapus kategori PWA. Pemeriksaan installable
+  dan perilaku offline perlu dilakukan manual lewat Chrome DevTools → Application
+  (lihat `docs/DEPLOY.md` pada Tahap 11).
+
+### Catatan untuk nanti
+
+- Halaman yang sudah tersimpan masih bisa dilihat saat offline walau pengguna sudah keluar.
+  Risikonya kecil (aplikasi dipakai pemilik dan 1–3 admin di perangkat sendiri), tetapi kalau
+  aplikasi nanti dipakai di HP bersama, cache halaman sebaiknya dihapus saat keluar.
+- PWA hanya bisa dipasang lewat **HTTPS** atau **localhost**. Di hosting nanti wajib pasang
+  sertifikat SSL lebih dulu — dicatat untuk `docs/DEPLOY.md` di Tahap 11.
+
+### Berkas penting Tahap 10
+
+| Berkas | Isi |
+|---|---|
+| `public/manifest.webmanifest` | Identitas aplikasi & daftar ikon |
+| `public/sw.js` | Aturan cache dan halaman offline |
+| `public/icons/` | 4 ikon hasil `php artisan pwa:ikon` |
+| `app/Console/Commands/BuatIkonPwa.php` | Penggambar ikon (GD) |
+| `resources/js/pwa.js` | Pendaftaran service worker & tombol pasang |
+| `resources/views/offline.blade.php` | Halaman saat tidak ada koneksi |
+| `app/Support/helpers.php` | Helper baru `versi_aset()` |
+| `tests/Feature/PwaTest.php` | 11 test manifest, ikon, offline, meta tag, aturan sw.js |
+
+---
+
+## Tahap 11 — Uji akhir, keamanan, backup, online ⏳
 
 Belum dikerjakan.

@@ -1,3 +1,18 @@
+# Tipe berkas PWA. Tanpa baris ini, sebagian server Apache mengirim
+# manifest.webmanifest sebagai berkas unduhan sehingga aplikasi tidak
+# bisa dipasang di layar utama.
+<IfModule mod_mime.c>
+    AddType application/manifest+json .webmanifest
+</IfModule>
+
+# Service worker harus selalu diperiksa ulang ke server supaya versi baru
+# langsung terpasang setelah "npm run build".
+<IfModule mod_headers.c>
+    <Files "sw.js">
+        Header set Cache-Control "no-cache, max-age=0, must-revalidate"
+    </Files>
+</IfModule>
+
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
         Options -MultiViews -Indexes

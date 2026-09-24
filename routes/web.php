@@ -31,6 +31,11 @@ use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/beranda')->name('home');
 
+// Satu-satunya halaman selain login yang boleh dibuka tanpa masuk: halaman ini
+// disimpan service worker dan ditampilkan saat tidak ada koneksi. Isinya tidak
+// memuat data usaha sama sekali.
+Route::view('/offline', 'offline')->name('offline');
+
 Route::middleware(['auth', 'aktif'])->group(function () {
 
     Route::get('/beranda', [DashboardController::class, 'index'])->name('beranda');

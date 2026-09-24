@@ -177,6 +177,31 @@ if (! function_exists('terbilang')) {
     }
 }
 
+if (! function_exists('versi_aset')) {
+    /**
+     * Penanda versi aset hasil build, dipakai sebagai versi cache PWA.
+     *
+     * Nilainya ikut berubah setiap kali Vite membangun ulang (isi
+     * public/build/manifest.json berubah), sehingga service worker lama
+     * otomatis diganti dan cache lamanya dibuang. Saat "npm run dev"
+     * berjalan, manifestnya belum ada dan nilainya "dev".
+     */
+    function versi_aset(): string
+    {
+        static $versi = null;
+
+        if ($versi !== null) {
+            return $versi;
+        }
+
+        $manifest = public_path('build/manifest.json');
+
+        return $versi = is_file($manifest)
+            ? substr(md5_file($manifest), 0, 10)
+            : 'dev';
+    }
+}
+
 if (! function_exists('nav_url')) {
     /**
      * URL menu yang aman dipakai walau route-nya belum dibuat (tahap berikutnya).
