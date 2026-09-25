@@ -50,35 +50,50 @@
                             $stok = $stokGudang[$produk->id] ?? 0;
                         @endphp
                         <li>
-                            <a href="{{ route('produk.show', $produk) }}" class="block px-4 py-3.5 transition hover:bg-frost">
-                                <div class="flex items-start justify-between gap-3">
-                                    <div class="min-w-0">
-                                        <p class="truncate font-bold">{{ $produk->name }}</p>
-                                        <p class="text-xs text-ink/50">{{ $produk->code }} &middot; {{ $produk->namaVarian() }}</p>
-                                    </div>
-                                    @unless ($produk->is_active)
-                                        <x-lencana warna="strawberry">Nonaktif</x-lencana>
-                                    @else
-                                        <x-lencana :warna="$produk->min_stock > 0 && $stok <= $produk->min_stock ? 'mango' : 'ink'">
-                                            {{ angka($stok) }} {{ $produk->unit }}
-                                        </x-lencana>
-                                    @endunless
-                                </div>
-
-                                <dl class="mt-2.5 grid grid-cols-4 gap-2 text-center">
-                                    @foreach ([
-                                        'Modal' => [rupiah($produk->cost_price), 'text-ink'],
-                                        'Jual' => [rupiah($produk->default_selling_price), 'text-ink'],
-                                        'Setoran' => [rupiah($r['setoran_per_pcs']), 'text-berry'],
-                                        'Laba' => [rupiah($r['laba_per_pcs']), $r['laba_per_pcs'] >= 0 ? 'text-mint' : 'text-strawberry'],
-                                    ] as $label => [$nilai, $warna])
-                                        <div class="rounded-lg bg-frost px-1.5 py-1.5">
-                                            <dt class="text-[10px] text-ink/50">{{ $label }}</dt>
-                                            <dd class="text-xs font-bold tabular-nums {{ $warna }}">{{ $nilai }}</dd>
+                            <div class="px-4 py-3.5 transition hover:bg-frost/60">
+                                <a href="{{ route('produk.show', $produk) }}" class="block">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div class="min-w-0">
+                                            <p class="truncate font-bold hover:text-berry">{{ $produk->name }}</p>
+                                            <p class="text-xs text-ink/50">{{ $produk->code }} &middot; {{ $produk->namaVarian() }}</p>
                                         </div>
-                                    @endforeach
-                                </dl>
-                            </a>
+                                        @unless ($produk->is_active)
+                                            <x-lencana warna="strawberry">Nonaktif</x-lencana>
+                                        @else
+                                            <x-lencana :warna="$produk->min_stock > 0 && $stok <= $produk->min_stock ? 'mango' : 'ink'">
+                                                {{ angka($stok) }} {{ $produk->unit }}
+                                            </x-lencana>
+                                        @endunless
+                                    </div>
+
+                                    <dl class="mt-2.5 grid grid-cols-4 gap-2 text-center">
+                                        @foreach ([
+                                            'Modal' => [rupiah($produk->cost_price), 'text-ink'],
+                                            'Jual' => [rupiah($produk->default_selling_price), 'text-ink'],
+                                            'Setoran' => [rupiah($r['setoran_per_pcs']), 'text-berry'],
+                                            'Laba' => [rupiah($r['laba_per_pcs']), $r['laba_per_pcs'] >= 0 ? 'text-mint' : 'text-strawberry'],
+                                        ] as $label => [$nilai, $warna])
+                                            <div class="rounded-lg bg-frost px-1.5 py-1.5">
+                                                <dt class="text-[10px] text-ink/50">{{ $label }}</dt>
+                                                <dd class="text-xs font-bold tabular-nums {{ $warna }}">{{ $nilai }}</dd>
+                                            </div>
+                                        @endforeach
+                                    </dl>
+                                </a>
+
+                                <div class="mt-3 flex items-center justify-end gap-2 border-t border-berry/5 pt-2.5">
+                                    <a href="{{ route('produk.show', $produk) }}"
+                                       class="rounded-lg border border-berry/20 bg-white px-3 py-1.5 text-xs font-semibold text-ink transition hover:bg-frost">
+                                        Detail
+                                    </a>
+                                    @can('input-transaksi')
+                                        <a href="{{ route('produk.edit', $produk) }}"
+                                           class="rounded-lg bg-berry/10 px-3 py-1.5 text-xs font-semibold text-berry transition hover:bg-berry hover:text-white">
+                                            Ubah
+                                        </a>
+                                    @endcan
+                                </div>
+                            </div>
                         </li>
                     @endforeach
                 </ul>
@@ -95,7 +110,8 @@
                                 <th class="px-3 py-3 text-right font-bold">Jual</th>
                                 <th class="px-3 py-3 text-right font-bold">Fee</th>
                                 <th class="px-3 py-3 text-right font-bold">Setoran</th>
-                                <th class="px-5 py-3 text-right font-bold">Laba/pcs</th>
+                                <th class="px-3 py-3 text-right font-bold">Laba/pcs</th>
+                                <th class="px-5 py-3 text-right font-bold">Aksi</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-berry/5">
@@ -128,8 +144,24 @@
                                         @endif
                                     </td>
                                     <td class="px-3 py-3 text-right font-semibold tabular-nums text-berry">{{ rupiah($r['setoran_per_pcs']) }}</td>
-                                    <td class="px-5 py-3 text-right font-bold tabular-nums {{ $r['laba_per_pcs'] >= 0 ? 'text-mint' : 'text-strawberry' }}">
+                                    <td class="px-3 py-3 text-right font-bold tabular-nums {{ $r['laba_per_pcs'] >= 0 ? 'text-mint' : 'text-strawberry' }}">
                                         {{ rupiah($r['laba_per_pcs']) }}
+                                    </td>
+                                    <td class="px-5 py-3 text-right">
+                                        <div class="flex items-center justify-end gap-1.5">
+                                            <a href="{{ route('produk.show', $produk) }}"
+                                               class="rounded-lg border border-berry/20 bg-white px-2.5 py-1 text-xs font-semibold text-ink transition hover:bg-frost"
+                                               title="Lihat Detail">
+                                                Detail
+                                            </a>
+                                            @can('input-transaksi')
+                                                <a href="{{ route('produk.edit', $produk) }}"
+                                                   class="rounded-lg bg-berry/10 px-2.5 py-1 text-xs font-semibold text-berry transition hover:bg-berry hover:text-white"
+                                                   title="Ubah Produk">
+                                                    Ubah
+                                                </a>
+                                            @endcan
+                                        </div>
                                     </td>
                                 </tr>
                             @endforeach

@@ -36,16 +36,15 @@
             @else
                 <ul class="divide-y divide-berry/5">
                     @foreach ($daftar as $pemasok)
-                        <li>
-                            <a href="{{ route('pemasok.show', $pemasok) }}"
-                               class="flex items-center gap-3 px-4 py-3.5 transition hover:bg-frost sm:px-5">
+                        <li class="flex items-center gap-3 px-4 py-3.5 transition hover:bg-frost sm:px-5">
+                            <a href="{{ route('pemasok.show', $pemasok) }}" class="flex min-w-0 flex-1 items-center gap-3">
                                 <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-berry/10 text-berry">
                                     <x-icon name="pemasok" class="h-5 w-5" />
                                 </span>
 
                                 <span class="min-w-0 flex-1">
                                     <span class="flex flex-wrap items-center gap-2">
-                                        <span class="truncate font-bold">{{ $pemasok->name }}</span>
+                                        <span class="truncate font-bold hover:text-berry">{{ $pemasok->name }}</span>
                                         @unless ($pemasok->is_active)
                                             <x-lencana warna="strawberry">Nonaktif</x-lencana>
                                         @endunless
@@ -61,6 +60,13 @@
                                     <span class="block text-[11px] text-ink/45">produk</span>
                                 </span>
                             </a>
+
+                            @can('input-transaksi')
+                                <a href="{{ route('pemasok.edit', $pemasok) }}"
+                                   class="shrink-0 rounded-lg bg-berry/10 px-3 py-1.5 text-xs font-semibold text-berry transition hover:bg-berry hover:text-white">
+                                    Ubah
+                                </a>
+                            @endcan
                         </li>
                     @endforeach
                 </ul>
