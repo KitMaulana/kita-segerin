@@ -1,12 +1,27 @@
 <x-app-layout :title="'Tagihan '.$tagihan->number" :subtitle="$tagihan->store->name">
 
     <x-slot:actions>
-        <x-tautan-tombol gaya="kedua" :href="route('tagihan.cetak', $tagihan)" target="_blank" class="!min-h-[36px] text-xs">
-            Cetak A4
-        </x-tautan-tombol>
-        <x-tautan-tombol gaya="kedua" :href="route('tagihan.struk', $tagihan)" target="_blank" class="!min-h-[36px] text-xs">
+        {{-- Tombol Cetak A4 — membuka invoice PDF di tab baru --}}
+        <a href="{{ route('tagihan.cetak', $tagihan) }}"
+           target="_blank"
+           title="Buka invoice PDF ukuran A4"
+           class="inline-flex items-center gap-1.5 rounded-xl bg-berry px-3.5 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-berry/85 active:scale-95">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4 shrink-0">
+                <path fill-rule="evenodd" d="M4.5 2A1.5 1.5 0 003 3.5v13A1.5 1.5 0 004.5 18h11a1.5 1.5 0 001.5-1.5V7.621a1.5 1.5 0 00-.44-1.06l-4.12-4.122A1.5 1.5 0 0011.378 2H4.5zm4.75 6.75a.75.75 0 011.5 0v2.546l.943-1.048a.75.75 0 111.114 1.004l-2.25 2.5a.75.75 0 01-1.114 0l-2.25-2.5a.75.75 0 111.114-1.004l.943 1.048V8.75z" clip-rule="evenodd" />
+            </svg>
+            Invoice PDF
+        </a>
+
+        {{-- Tombol Struk 58mm --}}
+        <a href="{{ route('tagihan.struk', $tagihan) }}"
+           target="_blank"
+           title="Buka struk untuk printer 58mm"
+           class="inline-flex items-center gap-1.5 rounded-xl border border-ink/20 bg-white px-3.5 py-2 text-xs font-bold text-ink/70 shadow-sm transition hover:bg-frost active:scale-95">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4 shrink-0">
+                <path fill-rule="evenodd" d="M5 2.75C5 1.784 5.784 1 6.75 1h6.5c.966 0 1.75.784 1.75 1.75v3.552c.377.046.752.097 1.126.153A2.212 2.212 0 0118 8.653v4.097A2.25 2.25 0 0115.75 15h-.241l.305 1.984A1.75 1.75 0 0114.084 19H5.915a1.75 1.75 0 01-1.73-2.016L4.492 15H4.25A2.25 2.25 0 012 12.75V8.653c0-1.082.775-2.034 1.874-2.198.374-.056.75-.107 1.126-.153V2.75zM6.5 4.5v-.75a.25.25 0 01.25-.25h6.5a.25.25 0 01.25.25V4.5a49.146 49.146 0 00-7 0zm-.741 8.067l.649 4.214h7.184l.65-4.214a49.752 49.752 0 00-8.483 0z" clip-rule="evenodd" />
+            </svg>
             Struk 58mm
-        </x-tautan-tombol>
+        </a>
     </x-slot:actions>
 
     <div class="mx-auto max-w-3xl space-y-5">

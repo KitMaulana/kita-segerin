@@ -215,14 +215,14 @@ class InvoiceController extends Controller
      */
     public function cetak(Invoice $tagihan): Response
     {
-        $tagihan->load(['store', 'items']);
+        $tagihan->load(['store', 'items', 'payments']);
 
         $pdf = Pdf::loadView('tagihan.cetak.a4', [
-            'tagihan' => $tagihan,
-            'pengaturan' => Setting::semua(),
+            'tagihan'     => $tagihan,
+            'pengaturan'  => Setting::semua(),
         ])->setPaper('a4');
 
-        return $pdf->stream('Tagihan-'.str_replace('/', '-', $tagihan->number).'.pdf');
+        return $pdf->stream('Invoice-'.str_replace('/', '-', $tagihan->number).'.pdf');
     }
 
     /**
