@@ -61,9 +61,15 @@
             @foreach ($tagihan->items as $baris)
                 <tr><td colspan="2" class="tebal">{{ $baris->product_name }}</td></tr>
                 <tr class="kecil">
-                    <td>{{ angka($baris->qty_sold) }} &times; {{ rupiah($baris->net_per_unit) }}</td>
-                    <td class="kanan">{{ rupiah($baris->subtotal) }}</td>
+                    <td>{{ angka($baris->qty_sold) }} &times; {{ rupiah($baris->unit_price) }}</td>
+                    <td class="kanan">{{ rupiah($baris->qty_sold * $baris->unit_price) }}</td>
                 </tr>
+                @if ($baris->fee_per_unit > 0)
+                    <tr class="kecil" style="opacity:.7;">
+                        <td>Fee toko</td>
+                        <td class="kanan">&minus; {{ rupiah($baris->qty_sold * $baris->fee_per_unit) }}</td>
+                    </tr>
+                @endif
             @endforeach
         </table>
 
